@@ -3,6 +3,7 @@ import {
   dietPlanContentSchema,
   workoutPlanContentSchema,
   type AnamnesisInput,
+  type ChatMessage,
   type DietPlanContent,
   type WorkoutPlanContent,
 } from "@/lib/types";
@@ -18,6 +19,24 @@ function getClient() {
     client = new OpenAI({ apiKey });
   }
   return client;
+}
+
+export async function gerarRespostaChat(
+  systemPrompt: string,
+  messages: ChatMessage[]
+): Promise<string> {
+  const openai = getClient();
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+  const response = await openai.responses.create({
+    model,
+    input: [
+      { role: "system", content: systemPrompt },
+      ...messages.map((m) => ({ role: m.role, content: m.content })),
+    ],
+  });
+
+  return response.output_text || "Não consegui gerar uma resposta agora. Tente novamente.";
 }
 
 const RESPONSE_SCHEMA = {

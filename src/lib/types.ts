@@ -136,3 +136,57 @@ export interface DietPlanRecord {
   conteudo: DietPlanContent;
   created_at: string;
 }
+
+export const REFEICOES = [
+  "cafe_da_manha",
+  "almoco",
+  "lanche",
+  "jantar",
+  "ceia",
+  "outro",
+] as const;
+
+export const mealLogSchema = z.object({
+  refeicao: z.enum(REFEICOES),
+  descricao: z.string().min(2).max(500),
+  calorias_estimadas: z.coerce.number().int().min(0).max(5000).optional(),
+});
+
+export type MealLogInput = z.infer<typeof mealLogSchema>;
+
+export interface MealLogRecord extends MealLogInput {
+  id: string;
+  user_id: string;
+  horario: string;
+  created_at: string;
+}
+
+export const PLANOS_ASSINATURA = ["mensal", "anual"] as const;
+export type PlanoAssinatura = (typeof PLANOS_ASSINATURA)[number];
+
+export const SUBSCRIPTION_STATUS = [
+  "pending",
+  "active",
+  "past_due",
+  "canceled",
+] as const;
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
+
+export interface SubscriptionRecord {
+  id: string;
+  user_id: string;
+  plano: PlanoAssinatura;
+  status: SubscriptionStatus;
+  pagarme_customer_id: string | null;
+  pagarme_subscription_id: string | null;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const chatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(4000),
+});
+
+export type ChatMessage = z.infer<typeof chatMessageSchema>;

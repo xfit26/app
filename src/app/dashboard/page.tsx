@@ -3,7 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RegenerateButton } from "@/components/dashboard/regenerate-button";
-import type { AnamnesisRecord, DietPlanRecord, WorkoutPlanRecord } from "@/lib/types";
+import type {
+  AnamnesisRecord,
+  DietPlanRecord,
+  SubscriptionRecord,
+  WorkoutPlanRecord,
+} from "@/lib/types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -34,7 +39,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [{ data: workout }, { data: diet }] = await Promise.all([
+  const [{ data: workout }, { data: diet }, { data: subscription }] = await Promise.all([
     supabase
       .from("workout_plans")
       .select("*")
@@ -49,7 +54,14 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle<DietPlanRecord>(),
+    supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", user!.id)
+      .maybeSingle<SubscriptionRecord>(),
   ]);
+
+  const assinaturaAtiva = subscription?.status === "active";
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,7 +77,7 @@ export default async function DashboardPage() {
         <RegenerateButton anamnesisId={anamnesis.id} />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-3">
         <Card>
           <h2 className="font-semibold">Treino</h2>
           {workout ? (
@@ -109,6 +121,20 @@ export default async function DashboardPage() {
               Nenhum plano de dieta gerado ainda.
             </p>
           )}
+        </Card>
+
+        <Card>
+          <h2 className="font-semibold">Nutricionista</h2>
+          <p className="mt-1 text-sm text-muted">
+            {assinaturaAtiva
+              ? "Converse com a IA sobre alimentação, macros e hábitos."
+              : "Assine para conversar com a IA sobre alimentação e macros."}
+          </p>
+          <Link href={assinaturaAtiva ? "/dashboard/nutricionista" : "/assinar"}>
+            <Button variant="secondary" className="mt-4">
+              {assinaturaAtiva ? "Abrir chat" : "Assinar"}
+            </Button>
+          </Link>
         </Card>
       </div>
     </div>
