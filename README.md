@@ -133,24 +133,41 @@ src/
     api/assinatura/          cria a assinatura na Pagar.me
     api/webhooks/pagarme/    recebe atualizações de status da assinatura
     api/chat/nutricionista/  responde o chat (gated por assinatura ativa)
+    api/treino/substituir/   sugere exercícios alternativos ("academia lotada")
+    termos/, privacidade/    páginas legais (LGPD)
+    robots.ts, sitemap.ts    SEO básico
     manifest.ts              manifest do PWA
   components/ui/             componentes base (Button, Input, Card, ...)
   components/dashboard/      nav, sign-out, regenerate plan, meal log form, chat
   lib/supabase/              clients browser/server/service + proxy (sessão)
-  lib/ai/openai.ts           prompt + chamada estruturada à OpenAI (planos e chat)
+  lib/ai/openai.ts           chamada estruturada à OpenAI (dieta e chat)
   lib/ai/nutricionista.ts    system prompt do chat Nutricionista
+  lib/workout/generator.ts   gerador de treino local (sem IA), a partir da anamnese
   lib/payments/pagarme.ts        cliente server-side da API da Pagar.me
   lib/payments/pagarme-client.ts tokenização de cartão no navegador
   lib/types.ts                schemas zod (anamnese, planos, refeições, assinatura)
   proxy.ts                    protege /dashboard, /anamnese e /assinar (Next.js 16)
 supabase/migrations/          schema SQL
+.github/workflows/ci.yml      lint + typecheck + build em cada PR
 ```
+
+O treino é montado por um gerador determinístico (`lib/workout/generator.ts`):
+sem chamar IA, ele monta o split semanal a partir de dias disponíveis, nível
+e local de treino, aplica volume extra nas "zonas prioritárias" escolhidas na
+anamnese e filtra exercícios contraindicados por lesões informadas. A dieta
+continua sendo gerada pela OpenAI. `POST /api/gerar-plano` tem um cooldown de
+60s por anamnese para evitar cliques repetidos gerando custo de API à toa.
 
 ## Deploy
 
 Recomendado: [Vercel](https://vercel.com/new). Configure as mesmas variáveis
-de ambiente do `.env.local` no projeto da Vercel, e atualize a Redirect URL
-no Supabase para o domínio de produção.
+de ambiente do `.env.local` no projeto da Vercel (incluindo
+`NEXT_PUBLIC_SITE_URL` com o domínio final, usado em `robots.txt` e
+`sitemap.xml`), e atualize a Redirect URL no Supabase para o domínio de
+produção.
+
+Antes de cobrar cartões reais, valide o fluxo completo da Pagar.me em modo
+sandbox — veja o aviso na seção [Assinatura (Pagar.me)](#assinatura-pagarme).
 
 ## Aviso
 

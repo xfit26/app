@@ -22,7 +22,8 @@ export function RegenerateButton({ anamnesisId }: { anamnesisId: string }) {
     setLoading(false);
 
     if (!res.ok) {
-      setError("Não foi possível gerar um novo plano. Tente novamente.");
+      const data = await res.json().catch(() => null);
+      setError(data?.error || "Não foi possível gerar um novo plano. Tente novamente.");
       return;
     }
 

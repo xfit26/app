@@ -11,12 +11,19 @@ export default function CadastroPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [aceite, setAceite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!aceite) {
+      setError("Você precisa aceitar os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -103,6 +110,27 @@ export default function CadastroPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </Field>
+
+          <label className="flex items-start gap-2 text-xs text-muted">
+            <input
+              type="checkbox"
+              className="mt-0.5 accent-primary"
+              checked={aceite}
+              onChange={(e) => setAceite(e.target.checked)}
+            />
+            <span>
+              Li e aceito os{" "}
+              <Link href="/termos" className="font-medium text-primary" target="_blank">
+                Termos de Uso
+              </Link>{" "}
+              e a{" "}
+              <Link href="/privacidade" className="font-medium text-primary" target="_blank">
+                Política de Privacidade
+              </Link>
+              , incluindo o tratamento dos dados de saúde que informarei na
+              anamnese.
+            </span>
+          </label>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 

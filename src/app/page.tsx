@@ -76,7 +76,14 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-border py-6 text-center text-xs text-muted">
-        FitIA
+        FitIA ·{" "}
+        <Link href="/termos" className="hover:text-foreground">
+          Termos de Uso
+        </Link>{" "}
+        ·{" "}
+        <Link href="/privacidade" className="hover:text-foreground">
+          Política de Privacidade
+        </Link>
       </footer>
     </div>
   );

@@ -7,6 +7,8 @@ import { anamnesisSchema, type AnamnesisRecord } from "@/lib/types";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+const REGENERATE_COOLDOWN_MS = 60_000;
+
 export async function POST(request: Request) {
   const supabase = await createClient();
 
@@ -40,6 +42,28 @@ export async function POST(request: Request) {
       { error: "Anamnese não encontrada." },
       { status: 404 }
     );
+  }
+
+  const { data: ultimoTreino } = await supabase
+    .from("workout_plans")
+    .select("created_at")
+    .eq("anamnesis_id", anamnesisId)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ created_at: string }>();
+
+  if (ultimoTreino) {
+    const elapsedMs = Date.now() - new Date(ultimoTreino.created_at).getTime();
+    if (elapsedMs < REGENERATE_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((REGENERATE_COOLDOWN_MS - elapsedMs) / 1000);
+      return NextResponse.json(
+        {
+          error: `Aguarde ${waitSeconds}s antes de gerar um novo plano para esta anamnese.`,
+        },
+        { status: 429 }
+      );
+    }
   }
 
   const anamnesis = anamnesisSchema.parse(anamnesisRow);
