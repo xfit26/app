@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SubstituteExerciseButton } from "@/components/dashboard/substitute-exercise-button";
 import type { WorkoutPlanRecord } from "@/lib/types";
 
 export default async function TreinoPage() {
@@ -66,6 +67,9 @@ export default async function TreinoPage() {
                         {ex.observacao && (
                           <div className="text-xs text-muted">{ex.observacao}</div>
                         )}
+                        <div className="mt-1">
+                          <SubstituteExerciseButton nome={ex.nome} />
+                        </div>
                       </td>
                       <td className="py-2 pr-2">{ex.series}</td>
                       <td className="py-2 pr-2">{ex.repeticoes}</td>

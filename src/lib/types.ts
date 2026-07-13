@@ -41,6 +41,19 @@ export const RESTRICOES_ALIMENTARES = [
   "nenhuma",
 ] as const;
 
+export const ZONAS_PRIORITARIAS = [
+  "Peito",
+  "Costas",
+  "Ombros",
+  "Bíceps",
+  "Tríceps",
+  "Quadríceps",
+  "Posterior de coxa",
+  "Glúteos",
+  "Panturrilha",
+  "Abdômen",
+] as const;
+
 export const anamnesisSchema = z.object({
   idade: z.coerce.number().int().min(12, "Idade mínima de 12 anos").max(100),
   sexo: z.enum(SEXOS),
@@ -52,6 +65,7 @@ export const anamnesisSchema = z.object({
   tempo_por_sessao_min: z.coerce.number().int().min(15).max(180),
   local_treino: z.enum(LOCAIS_TREINO),
   equipamentos: z.array(z.enum(EQUIPAMENTOS_DISPONIVEIS)).default([]),
+  zonas_prioritarias: z.array(z.enum(ZONAS_PRIORITARIAS)).default([]),
   lesoes_limitacoes: z.string().max(1000).optional().default(""),
   condicoes_medicas: z.string().max(1000).optional().default(""),
   restricoes_alimentares: z.array(z.enum(RESTRICOES_ALIMENTARES)).default([]),

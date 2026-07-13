@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { gerarPlanoComIA } from "@/lib/ai/openai";
+import { gerarDietaComIA } from "@/lib/ai/openai";
+import { buildWorkoutPlan } from "@/lib/workout/generator";
 import { anamnesisSchema, type AnamnesisRecord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -43,48 +44,53 @@ export async function POST(request: Request) {
 
   const anamnesis = anamnesisSchema.parse(anamnesisRow);
 
-  let plano;
-  try {
-    plano = await gerarPlanoComIA(anamnesis);
-  } catch (err) {
-    console.error("Erro ao gerar plano com IA:", err);
-    return NextResponse.json(
-      { error: "Não foi possível gerar o plano no momento. Tente novamente." },
-      { status: 502 }
-    );
-  }
+  const treino = buildWorkoutPlan(anamnesis);
 
-  const [{ data: workout, error: workoutError }, { data: diet, error: dietError }] =
-    await Promise.all([
-      supabase
-        .from("workout_plans")
-        .insert({
-          user_id: user.id,
-          anamnesis_id: anamnesisId,
-          conteudo: plano.treino,
-        })
-        .select("id")
-        .single(),
-      supabase
-        .from("diet_plans")
-        .insert({
-          user_id: user.id,
-          anamnesis_id: anamnesisId,
-          conteudo: plano.dieta,
-        })
-        .select("id")
-        .single(),
-    ]);
+  const { data: workout, error: workoutError } = await supabase
+    .from("workout_plans")
+    .insert({
+      user_id: user.id,
+      anamnesis_id: anamnesisId,
+      conteudo: treino,
+    })
+    .select("id")
+    .single();
 
-  if (workoutError || dietError) {
+  if (workoutError || !workout) {
     return NextResponse.json(
-      { error: "Plano gerado, mas houve falha ao salvar." },
+      { error: "Não foi possível salvar o treino gerado." },
       { status: 500 }
     );
   }
 
+  let dietPlanId: string | undefined;
+  let dietWarning: string | undefined;
+
+  try {
+    const dieta = await gerarDietaComIA(anamnesis);
+    const { data: diet, error: dietError } = await supabase
+      .from("diet_plans")
+      .insert({
+        user_id: user.id,
+        anamnesis_id: anamnesisId,
+        conteudo: dieta,
+      })
+      .select("id")
+      .single();
+
+    if (dietError || !diet) {
+      dietWarning = "Treino gerado, mas houve falha ao salvar a dieta.";
+    } else {
+      dietPlanId = diet.id;
+    }
+  } catch (err) {
+    console.error("Erro ao gerar dieta com IA:", err);
+    dietWarning = "Treino gerado, mas não foi possível gerar a dieta agora.";
+  }
+
   return NextResponse.json({
     workoutPlanId: workout.id,
-    dietPlanId: diet.id,
+    dietPlanId,
+    warning: dietWarning,
   });
 }

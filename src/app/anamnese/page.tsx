@@ -17,6 +17,7 @@ import {
   SEXOS,
   EQUIPAMENTOS_DISPONIVEIS,
   RESTRICOES_ALIMENTARES,
+  ZONAS_PRIORITARIAS,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -79,6 +80,7 @@ const STEPS: { title: string; fields: (keyof AnamnesisFormInput)[] }[] = [
       "tempo_por_sessao_min",
       "local_treino",
       "equipamentos",
+      "zonas_prioritarias",
     ],
   },
   {
@@ -119,6 +121,7 @@ export default function AnamnesePage() {
     defaultValues: {
       equipamentos: [],
       restricoes_alimentares: [],
+      zonas_prioritarias: [],
       lesoes_limitacoes: "",
       condicoes_medicas: "",
       alergias: "",
@@ -128,6 +131,7 @@ export default function AnamnesePage() {
 
   const equipamentos = watch("equipamentos") || [];
   const restricoes = watch("restricoes_alimentares") || [];
+  const zonasPrioritarias = watch("zonas_prioritarias") || [];
 
   function toggleEquipamento(value: (typeof EQUIPAMENTOS_DISPONIVEIS)[number]) {
     const next = equipamentos.includes(value)
@@ -141,6 +145,13 @@ export default function AnamnesePage() {
       ? restricoes.filter((v) => v !== value)
       : [...restricoes, value];
     setValue("restricoes_alimentares", next, { shouldValidate: true });
+  }
+
+  function toggleZonaPrioritaria(value: (typeof ZONAS_PRIORITARIAS)[number]) {
+    const next = zonasPrioritarias.includes(value)
+      ? zonasPrioritarias.filter((v) => v !== value)
+      : [...zonasPrioritarias, value];
+    setValue("zonas_prioritarias", next, { shouldValidate: true });
   }
 
   async function goNext() {
@@ -323,6 +334,22 @@ export default function AnamnesePage() {
                       onChange={() => toggleEquipamento(eq)}
                     >
                       {LABELS[eq]}
+                    </CheckboxLabel>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Zonas prioritárias (opcional)" htmlFor="zonas_prioritarias">
+                <p className="mb-2 text-xs text-muted">
+                  Selecione grupos musculares que devem receber volume extra no seu treino.
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {ZONAS_PRIORITARIAS.map((zona) => (
+                    <CheckboxLabel
+                      key={zona}
+                      checked={zonasPrioritarias.includes(zona)}
+                      onChange={() => toggleZonaPrioritaria(zona)}
+                    >
+                      {zona}
                     </CheckboxLabel>
                   ))}
                 </div>
