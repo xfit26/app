@@ -7,6 +7,7 @@ import {
   type DietPlanContent,
   type WorkoutPlanContent,
 } from "@/lib/types";
+import { calcularResultado, calcularMetaCalorica } from "@/lib/calc/tmb";
 
 let client: OpenAI | null = null;
 
@@ -142,45 +143,66 @@ const RESPONSE_SCHEMA = {
 } as const;
 
 function buildPrompt(anamnesis: AnamnesisInput): string {
-  return `Você é um personal trainer e nutricionista esportivo experiente. Monte um
-plano de treino e um plano de dieta personalizados para o usuário abaixo, com
-base nas respostas da anamnese. Responda SOMENTE com o JSON estruturado
-solicitado, em português do Brasil.
+  const { tmb, gastoTotal, aguaMl } = calcularResultado(
+    anamnesis.genero,
+    anamnesis.peso_kg,
+    anamnesis.altura_cm,
+    anamnesis.idade,
+    anamnesis.nivel_experiencia
+  );
+  const metaCalorica = calcularMetaCalorica(gastoTotal, anamnesis.objetivo);
 
-DADOS DO USUÁRIO (anamnese):
+  return `Você é o treinador Léo Moura, personal trainer e nutricionista esportivo
+experiente. Monte um plano de treino e um plano de dieta personalizados para
+o(a) aluno(a) abaixo, com base nas respostas da anamnese. Responda SOMENTE com
+o JSON estruturado solicitado, em português do Brasil.
+
+DADOS DO ALUNO (anamnese):
+- Nome: ${anamnesis.nome}
+- Gênero: ${anamnesis.genero}
 - Idade: ${anamnesis.idade} anos
-- Sexo: ${anamnesis.sexo}
 - Altura: ${anamnesis.altura_cm} cm
 - Peso: ${anamnesis.peso_kg} kg
-- Objetivo principal: ${anamnesis.objetivo}
-- Nível de experiência com treino: ${anamnesis.nivel_experiencia}
-- Dias disponíveis por semana para treinar: ${anamnesis.dias_disponiveis}
-- Tempo disponível por sessão: ${anamnesis.tempo_por_sessao_min} minutos
+- Percentual de gordura informado: ${anamnesis.percentual_gordura ?? "não informado"}
 - Local de treino: ${anamnesis.local_treino}
-- Equipamentos disponíveis: ${anamnesis.equipamentos.join(", ") || "nenhum informado"}
-- Lesões ou limitações físicas: ${anamnesis.lesoes_limitacoes || "nenhuma informada"}
-- Condições médicas relevantes: ${anamnesis.condicoes_medicas || "nenhuma informada"}
-- Restrições alimentares: ${anamnesis.restricoes_alimentares.join(", ") || "nenhuma"}
-- Alergias alimentares: ${anamnesis.alergias || "nenhuma informada"}
-- Refeições por dia desejadas: ${anamnesis.refeicoes_por_dia}
-- Nível de atividade diária (fora do treino): ${anamnesis.nivel_atividade_diaria}
-- Qualidade do sono: ${anamnesis.qualidade_sono}
-- Nível de estresse: ${anamnesis.nivel_estresse}
-- Observações adicionais: ${anamnesis.observacoes || "nenhuma"}
+- Nível de atividade física: ${anamnesis.nivel_experiencia}
+- Frequência de treino: ${anamnesis.frequencia_treino}x por semana
+- Dias disponíveis para aeróbico: ${anamnesis.dias_aerobico}
+- Lesões/limitações/condições de saúde: ${anamnesis.restricoes_saude || "nenhuma informada"}
+- Objetivo: ${anamnesis.objetivo}
+- Zonas musculares priorizadas: ${anamnesis.zonas_alvo.join(", ") || "nenhuma em especial, treino equilibrado"}
+
+CÁLCULO JÁ REALIZADO (fórmula de Harris-Benedict) — use estes valores, não
+recalcule:
+- TMB: ${Math.round(tmb)} kcal
+- Gasto energético total diário: ${Math.round(gastoTotal)} kcal
+- Meta calórica diária para o objetivo (${anamnesis.objetivo}): ${Math.round(metaCalorica)} kcal
+- Meta de ingestão de água: ${(aguaMl / 1000).toFixed(1)} L/dia
+
+PREFERÊNCIAS DE DIETA:
+- Refeições por dia: ${anamnesis.refeicoes_por_dia}
+- Tipo de dieta: ${anamnesis.tipo_dieta}
+- Proteínas que o aluno aceita: ${anamnesis.proteinas.join(", ")}
+- Carboidratos que o aluno aceita: ${anamnesis.carboidratos.join(", ")}
+- Gorduras que o aluno aceita: ${anamnesis.gorduras.join(", ")}
 
 INSTRUÇÕES PARA O TREINO:
-- Monte exatamente ${anamnesis.dias_disponiveis} dias de treino por semana, cada um cabendo em ${anamnesis.tempo_por_sessao_min} minutos.
-- Use apenas exercícios compatíveis com o local de treino e os equipamentos disponíveis.
-- Respeite lesões/limitações e condições médicas informadas, evitando exercícios contraindicados.
-- Adeque o volume e a intensidade ao nível de experiência informado.
+- Monte exatamente ${anamnesis.frequencia_treino} dias de treino por semana.
+- Use apenas exercícios compatíveis com o local de treino informado (${anamnesis.local_treino}).
+- Dê prioridade extra (mais volume/exercícios) às zonas musculares priorizadas pelo aluno, sem negligenciar o restante do corpo.
+- Se houver dias disponíveis para aeróbico (${anamnesis.dias_aerobico}), inclua recomendações de cardio nesses dias dentro do resumo do plano.
+- Respeite rigorosamente lesões/limitações/condições de saúde informadas, evitando exercícios contraindicados.
+- Adeque o volume e a intensidade ao nível de atividade física informado.
 
 INSTRUÇÕES PARA A DIETA:
-- Calcule as calorias diárias e macros adequados ao objetivo, peso, altura, idade, sexo e nível de atividade.
+- Use como meta calórica diária o valor já calculado acima (${Math.round(metaCalorica)} kcal) e distribua os macros de acordo com o objetivo e o tipo de dieta (${anamnesis.tipo_dieta}).
+- Se o tipo de dieta for "vegana", não utilize nenhum produto de origem animal, mesmo que apareça nas listas de proteína/gordura selecionadas. Se for "vegetariana", não utilize carnes/peixes. Se for "carb_cycling", alterne dias de maior e menor carboidrato entre as refeições/observações.
 - Distribua em exatamente ${anamnesis.refeicoes_por_dia} refeições.
-- Respeite rigorosamente as restrições alimentares e alergias informadas — nunca sugira um alimento que viole essas restrições.
-- Prefira alimentos comuns e acessíveis no Brasil.
+- Monte a dieta APENAS com alimentos das listas de proteínas, carboidratos e gorduras informadas pelo aluno — não sugira alimentos fora dessas listas.
+- Mencione a meta de água (${(aguaMl / 1000).toFixed(1)} L/dia) em "observacoes_gerais".
+- Prefira preparações comuns e acessíveis no Brasil.
 
-Inclua em "observacoes_gerais" um lembrete de que o plano é gerado por IA e não substitui acompanhamento de um profissional de educação física e nutrição, especialmente havendo condições médicas.`;
+Inclua em "observacoes_gerais" um lembrete de que o plano é gerado por IA e não substitui acompanhamento de um profissional de educação física e nutrição, especialmente havendo condições de saúde relevantes.`;
 }
 
 export interface GeneratedPlano {
@@ -225,4 +247,169 @@ export async function gerarPlanoComIA(
   const dieta = dietPlanContentSchema.parse(parsed.dieta);
 
   return { treino, dieta };
+}
+
+// ============================================================================
+// Foto da dieta -> estimativa de calorias/macros (módulo do plano 8 semanas)
+// ============================================================================
+
+const FOTO_REFEICAO_SCHEMA = {
+  type: "object",
+  properties: {
+    descricao: { type: "string" },
+    calorias: { type: "integer" },
+    proteinas_g: { type: "integer" },
+    carboidratos_g: { type: "integer" },
+    gorduras_g: { type: "integer" },
+    confianca: { type: "string", enum: ["baixa", "media", "alta"] },
+  },
+  required: [
+    "descricao",
+    "calorias",
+    "proteinas_g",
+    "carboidratos_g",
+    "gorduras_g",
+    "confianca",
+  ],
+  additionalProperties: false,
+} as const;
+
+export interface AnaliseFotoRefeicao {
+  descricao: string;
+  calorias: number;
+  proteinas_g: number;
+  carboidratos_g: number;
+  gorduras_g: number;
+  confianca: "baixa" | "media" | "alta";
+}
+
+/** Analisa uma foto de refeição (data URL base64) e estima calorias/macros. */
+export async function analisarFotoRefeicao(
+  imageDataUrl: string
+): Promise<AnaliseFotoRefeicao> {
+  const openai = getClient();
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+  const response = await openai.responses.create({
+    model,
+    input: [
+      {
+        role: "system",
+        content:
+          "Você é um nutricionista esportivo estimando visualmente calorias e macros de uma refeição a partir de uma foto. Seja realista quanto à incerteza dessa estimativa visual.",
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: "Estime as calorias e os macros desta refeição. Responda em português do Brasil.",
+          },
+          { type: "input_image", image_url: imageDataUrl, detail: "auto" },
+        ],
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "analise_foto_refeicao",
+        schema: FOTO_REFEICAO_SCHEMA,
+        strict: true,
+      },
+    },
+  });
+
+  const raw = response.output_text;
+  if (!raw) {
+    throw new Error("A IA não retornou uma análise.");
+  }
+
+  return JSON.parse(raw) as AnaliseFotoRefeicao;
+}
+
+// ============================================================================
+// Suplementos — orientação por IA (NÃO é uma consulta oficial à base da
+// ANVISA; é uma orientação geral que deve sempre ser confirmada em
+// https://consultas.anvisa.gov.br)
+// ============================================================================
+
+export async function gerarOrientacaoSuplemento(nomeSuplemento: string): Promise<string> {
+  const openai = getClient();
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+  const systemPrompt = `Você é um assistente de orientação sobre suplementos esportivos. Você NÃO
+tem acesso em tempo real ao banco de dados da ANVISA nem a laudos oficiais.
+Baseado no seu conhecimento geral, dê uma orientação sobre o produto/marca
+informado: se é uma categoria de suplemento reconhecida e regulamentada no
+Brasil, pontos de atenção comuns (adulteração, dosagem, selo do fabricante,
+registro do fabricante na ANVISA) e sempre reforce, de forma clara, que o
+usuário deve confirmar a regularização do lote específico diretamente em
+https://consultas.anvisa.gov.br/#/saude/, pois você não tem acesso a dados
+em tempo real. Nunca afirme categoricamente que um produto "passou" ou
+"reprovou" em um laudo — você não tem essa informação. Responda em
+português do Brasil, de forma direta, em até 6 frases.`;
+
+  const response = await openai.responses.create({
+    model,
+    input: [
+      { role: "system", content: systemPrompt },
+      {
+        role: "user",
+        content: `Suplemento/produto: ${nomeSuplemento}`,
+      },
+    ],
+  });
+
+  return (
+    response.output_text ||
+    "Não consegui gerar uma orientação agora. Consulte diretamente https://consultas.anvisa.gov.br."
+  );
+}
+
+// ============================================================================
+// Correção de treino por vídeo — feedback em texto + áudio (módulo do plano
+// 8 semanas). Não há análise computacional do vídeo em si (visão computador
+// quadro a quadro); o feedback é gerado a partir do exercício informado e das
+// observações do aluno, com boas práticas de execução para aquele exercício.
+// ============================================================================
+
+export async function gerarFeedbackTreino(
+  exercicio: string,
+  observacao: string | null
+): Promise<string> {
+  const openai = getClient();
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+  const systemPrompt = `Você é o treinador Léo Moura dando um feedback em áudio, curto e direto (até
+8 frases), sobre a execução de um exercício que o aluno gravou em vídeo e
+descreveu. Dê dicas objetivas de postura, amplitude, respiração e erros
+comuns naquele exercício, e recomende contato com um profissional
+presencialmente se notar risco de lesão pela descrição. Fale em português do
+Brasil, em tom de treinador motivador.`;
+
+  const userPrompt = `Exercício: ${exercicio}\nObservações do aluno sobre a execução: ${
+    observacao || "nenhuma observação adicional"
+  }`;
+
+  const response = await openai.responses.create({
+    model,
+    input: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  });
+
+  return response.output_text || "Não foi possível gerar o feedback agora.";
+}
+
+/** Converte o texto de feedback em áudio (mp3) usando o modelo de TTS da OpenAI. */
+export async function gerarAudioFeedback(texto: string): Promise<Buffer> {
+  const openai = getClient();
+  const speech = await openai.audio.speech.create({
+    model: "gpt-4o-mini-tts",
+    voice: "onyx",
+    input: texto,
+  });
+  const arrayBuffer = await speech.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }

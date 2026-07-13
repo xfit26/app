@@ -13,15 +13,20 @@ function formatarPerfil(anamnesis: AnamnesisRecord | null): string {
   if (!anamnesis) return "Usuário ainda não preencheu a anamnese.";
 
   return [
+    `Nome: ${anamnesis.nome}`,
+    `Gênero: ${anamnesis.genero}`,
     `Idade: ${anamnesis.idade} anos`,
-    `Sexo: ${anamnesis.sexo}`,
     `Altura: ${anamnesis.altura_cm} cm`,
     `Peso: ${anamnesis.peso_kg} kg`,
     `Objetivo: ${anamnesis.objetivo}`,
-    `Restrições alimentares: ${anamnesis.restricoes_alimentares.join(", ") || "nenhuma"}`,
-    `Alergias: ${anamnesis.alergias || "nenhuma informada"}`,
-    `Condições médicas: ${anamnesis.condicoes_medicas || "nenhuma informada"}`,
-    `Refeições por dia desejadas: ${anamnesis.refeicoes_por_dia}`,
+    `Meta calórica diária: ${Math.round(anamnesis.meta_calorica)} kcal`,
+    `Meta de água diária: ${(anamnesis.agua_ml / 1000).toFixed(1)} L`,
+    `Tipo de dieta: ${anamnesis.tipo_dieta}`,
+    `Refeições por dia: ${anamnesis.refeicoes_por_dia}`,
+    `Proteínas aceitas: ${anamnesis.proteinas.join(", ")}`,
+    `Carboidratos aceitos: ${anamnesis.carboidratos.join(", ")}`,
+    `Gorduras aceitas: ${anamnesis.gorduras.join(", ")}`,
+    `Restrições/condições de saúde: ${anamnesis.restricoes_saude || "nenhuma informada"}`,
   ].join("\n");
 }
 
@@ -41,7 +46,8 @@ export function buildNutricionistaSystemPrompt(
   anamnesis: AnamnesisRecord | null,
   mealLogs: MealLogRecord[]
 ): string {
-  return `Você é o "Nutricionista" do app FitIA, um assistente de dieta acessível e educativo.
+  return `Você é o "Nutricionista" do app do treinador Léo Moura, um assistente de
+dieta acessível e educativo.
 
 Responda SOMENTE dúvidas relacionadas a alimentação, macronutrientes, calorias, hábitos alimentares e hidratação.
 
@@ -53,7 +59,8 @@ ${formatarPerfil(anamnesis)}
 ${formatarRefeicoesRecentes(mealLogs)}
 
 Regras:
-- Se a pergunta for sobre treino ou exercício físico, redirecione educadamente o usuário para o chat "Personal", sem tentar responder sobre treino você mesmo.
+- Se a pergunta for sobre treino ou exercício físico, redirecione educadamente o usuário para o chat "Treinador".
+- Se a pergunta for sobre suplementos, redirecione para o chat "Suplementos".
 - Não prescreva dietas restritivas radicais.
 - Não recomende suplementação sem reforçar que qualquer suplemento deve ser avaliado por um profissional (médico ou nutricionista) antes do uso.
 - Se identificar sinais de relação problemática com comida na conversa (ex: restrição extrema, culpa excessiva, compensação, padrões compulsivos), oriente com cuidado e empatia a buscar acompanhamento profissional especializado, sem fazer diagnóstico.

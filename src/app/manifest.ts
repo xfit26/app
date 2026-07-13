@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FitIA — Treino e dieta por IA",
-    short_name: "FitIA",
+    name: "Léo Moura — Treino e dieta por IA",
+    short_name: "Léo Moura",
     description:
-      "Treino e dieta personalizados por IA a partir da sua anamnese.",
+      "Treinos do treinador Léo Moura e dieta personalizados por IA a partir da sua anamnese.",
     start_url: "/",
     display: "standalone",
     background_color: "#f7faf8",

@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import type { AnamnesisRecord } from "@/lib/types";
 
 const OBJETIVO_LABELS: Record<string, string> = {
-  emagrecimento: "Emagrecimento",
-  hipertrofia: "Hipertrofia (ganho de massa)",
-  resistencia: "Resistência / condicionamento",
-  forca: "Força",
-  saude_geral: "Saúde geral / bem-estar",
+  emagrecimento: "Emagrecimento / perda de peso",
+  definicao: "Definição / preservar massa",
+  ganho_massa: "Ganho de massa",
 };
 
 export default async function PerfilPage() {
@@ -43,6 +41,8 @@ export default async function PerfilPage() {
 
         {anamnesis ? (
           <dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
+            <Info label="Nome" value={anamnesis.nome} />
+            <Info label="Gênero" value={anamnesis.genero} />
             <Info label="Idade" value={`${anamnesis.idade} anos`} />
             <Info label="Altura" value={`${anamnesis.altura_cm} cm`} />
             <Info label="Peso" value={`${anamnesis.peso_kg} kg`} />
@@ -50,23 +50,27 @@ export default async function PerfilPage() {
               label="Objetivo"
               value={OBJETIVO_LABELS[anamnesis.objetivo] ?? anamnesis.objetivo}
             />
-            <Info label="Experiência" value={anamnesis.nivel_experiencia} />
+            <Info label="Nível de atividade física" value={anamnesis.nivel_experiencia} />
             <Info
-              label="Disponibilidade"
-              value={`${anamnesis.dias_disponiveis}x/semana, ${anamnesis.tempo_por_sessao_min}min`}
+              label="Frequência de treino"
+              value={`${anamnesis.frequencia_treino}x/semana`}
+            />
+            <Info
+              label="Aeróbico"
+              value={
+                anamnesis.dias_aerobico === 0
+                  ? "Nenhum dia"
+                  : `${anamnesis.dias_aerobico} dia(s)/semana`
+              }
             />
             <Info label="Local de treino" value={anamnesis.local_treino} />
+            <Info label="TMB" value={`${Math.round(anamnesis.tmb)} kcal`} />
+            <Info label="Meta calórica" value={`${Math.round(anamnesis.meta_calorica)} kcal/dia`} />
+            <Info label="Meta de água" value={`${(anamnesis.agua_ml / 1000).toFixed(1)} L/dia`} />
+            <Info label="Tipo de dieta" value={anamnesis.tipo_dieta} />
             <Info
               label="Refeições/dia"
               value={String(anamnesis.refeicoes_por_dia)}
-            />
-            <Info
-              label="Restrições alimentares"
-              value={
-                anamnesis.restricoes_alimentares.length
-                  ? anamnesis.restricoes_alimentares.join(", ")
-                  : "Nenhuma"
-              }
             />
           </dl>
         ) : (

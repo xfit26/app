@@ -15,19 +15,18 @@ const API_BASE = "https://api.pagar.me/core/v5";
 
 const PLAN_CONFIG: Record<
   PlanoAssinatura,
-  { interval: "month" | "year"; intervalCount: number; envVar: string; defaultCents: number }
+  {
+    interval: "week" | "month" | "year";
+    intervalCount: number;
+    envVar: string;
+    defaultCents: number;
+  }
 > = {
-  mensal: {
-    interval: "month",
-    intervalCount: 1,
-    envVar: "PAGARME_PLAN_MENSAL_PRICE_CENTS",
-    defaultCents: 2990,
-  },
-  anual: {
-    interval: "year",
-    intervalCount: 1,
-    envVar: "PAGARME_PLAN_ANUAL_PRICE_CENTS",
-    defaultCents: 29900,
+  oito_semanas: {
+    interval: "week",
+    intervalCount: 8,
+    envVar: "PAGARME_PLAN_OITO_SEMANAS_PRICE_CENTS",
+    defaultCents: 49900,
   },
 };
 
@@ -112,7 +111,7 @@ export async function criarAssinatura({
       billing_type: "prepaid",
       installments: 1,
       currency: "BRL",
-      description: `FitIA — plano ${plano}`,
+      description: `Léo Moura — plano ${plano}`,
       quantity: 1,
       pricing_scheme: { scheme_type: "Unit", price: precoDoPlano(plano) },
       customer: {
