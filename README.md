@@ -169,6 +169,9 @@ produção.
 Antes de cobrar cartões reais, valide o fluxo completo da Pagar.me em modo
 sandbox — veja o aviso na seção [Assinatura (Pagar.me)](#assinatura-pagarme).
 
+Checklist completo de deploy (Supabase, OpenAI, Pagar.me, LGPD, testes
+pós-deploy): [DEPLOY.md](./DEPLOY.md).
+
 ## Aviso
 
 Os planos gerados por IA são um ponto de partida e não substituem o
