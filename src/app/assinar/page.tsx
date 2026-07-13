@@ -8,14 +8,25 @@ import { Field, Input } from "@/components/ui/field";
 import { tokenizarCartao } from "@/lib/payments/pagarme-client";
 import type { PlanoAssinatura } from "@/lib/types";
 
-const PLANOS: { id: PlanoAssinatura; label: string; precoLabel: string }[] = [
-  { id: "mensal", label: "Mensal", precoLabel: "R$ 29,90/mês" },
-  { id: "anual", label: "Anual", precoLabel: "R$ 299,00/ano" },
-];
+const PLANO: {
+  id: PlanoAssinatura;
+  label: string;
+  precoLabel: string;
+  recursos: string[];
+} = {
+  id: "oito_semanas",
+  label: "Plano 8 semanas",
+  precoLabel: "R$ 499,00 / 8 semanas",
+  recursos: [
+    "Foto da dieta com estimativa de calorias e macros por IA",
+    "Módulo de suplementos (orientação por IA)",
+    "Correção de treino por vídeo (até 6 vídeos, com feedback em áudio)",
+  ],
+};
 
 export default function AssinarPage() {
   const router = useRouter();
-  const [plano, setPlano] = useState<PlanoAssinatura>("mensal");
+  const plano: PlanoAssinatura = PLANO.id;
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
@@ -60,7 +71,7 @@ export default function AssinarPage() {
         throw new Error(body?.error || "Não foi possível concluir a assinatura.");
       }
 
-      router.push("/dashboard/nutricionista");
+      router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro inesperado.");
@@ -71,28 +82,19 @@ export default function AssinarPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-12">
-      <h1 className="text-2xl font-semibold">Assinar chat Nutricionista</h1>
+      <h1 className="text-2xl font-semibold">{PLANO.label}</h1>
       <p className="mt-1 text-sm text-muted">
-        Converse com a IA sobre alimentação, macros e hábitos alimentares com
-        base no seu perfil e nas suas refeições registradas.
+        Faça upgrade para desbloquear os módulos exclusivos do treinador Léo
+        Moura.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        {PLANOS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setPlano(p.id)}
-            className={`rounded-xl border p-4 text-left transition-colors ${
-              plano === p.id
-                ? "border-primary bg-primary/10"
-                : "border-border bg-card"
-            }`}
-          >
-            <div className="font-medium">{p.label}</div>
-            <div className="text-sm text-muted">{p.precoLabel}</div>
-          </button>
-        ))}
+      <div className="mt-6 rounded-xl border border-primary bg-primary/10 p-4">
+        <div className="font-medium">{PLANO.precoLabel}</div>
+        <ul className="mt-2 flex flex-col gap-1 text-sm text-muted">
+          {PLANO.recursos.map((r) => (
+            <li key={r}>• {r}</li>
+          ))}
+        </ul>
       </div>
 
       <Card className="mt-6">

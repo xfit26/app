@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
+import { THEME_COOKIE, parseGeneroCookie } from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,14 +16,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FitIA — Treino e dieta personalizados por IA",
+  title: "Léo Moura — Treinos e dieta personalizados por IA",
   description:
-    "Monte seu treino e sua dieta personalizados por IA a partir de uma anamnese completa.",
+    "Treinos montados pelo treinador Léo Moura e adaptados por IA, com dieta personalizada a partir de uma anamnese completa.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "FitIA",
+    title: "Léo Moura",
   },
   icons: {
     icon: [
@@ -36,14 +38,18 @@ export const viewport: Viewport = {
   themeColor: "#16a34a",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const genero = parseGeneroCookie(cookieStore.get(THEME_COOKIE)?.value);
+
   return (
     <html
       lang="pt-BR"
+      data-theme={genero}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import type { ChatMessage } from "@/lib/types";
 
-export function NutricionistaChat() {
+export function ChatWidget({
+  endpoint,
+  saudacao,
+  placeholder,
+}: {
+  endpoint: string;
+  saudacao: string;
+  placeholder: string;
+}) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      content:
-        "Olá! Sou o Nutricionista do FitIA. Pode me perguntar sobre alimentação, calorias, macros, hidratação ou hábitos alimentares.",
-    },
+    { role: "assistant", content: saudacao },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +31,7 @@ export function NutricionistaChat() {
     setLoading(true);
     setError(null);
 
-    const res = await fetch("/api/chat/nutricionista", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: nextMessages }),
@@ -73,7 +77,7 @@ export function NutricionistaChat() {
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Pergunte sobre alimentação, macros, calorias..."
+          placeholder={placeholder}
           disabled={loading}
         />
         <Button type="submit" disabled={loading || !input.trim()}>

@@ -7,7 +7,6 @@ import {
   chatMessageSchema,
   type AnamnesisRecord,
   type MealLogRecord,
-  type SubscriptionRecord,
 } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -26,19 +25,6 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
-  }
-
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle<SubscriptionRecord>();
-
-  if (subscription?.status !== "active") {
-    return NextResponse.json(
-      { error: "É necessário uma assinatura ativa para usar o chat Nutricionista." },
-      { status: 402 }
-    );
   }
 
   const body = await request.json().catch(() => null);
